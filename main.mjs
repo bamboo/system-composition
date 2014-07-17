@@ -28,14 +28,11 @@ fun dependency-graph-for component-map ->
       if (result.has-node lisp-case) lisp-case
       else null
 
-  var direct-deps = {}
   ks.for-each k ->
     var component = component-map[k]
     if !(component instanceof Function)
       throw Error ('Invalid component definition for `' + k + "': " + component)
-    direct-deps[k] = []
     fun add-dependency d ->
-      direct-deps[k].push d
       result.add-dependency (k, d)
     (dependencies-of component).for-each d -> do!
       var resolved = resolve d
@@ -48,7 +45,6 @@ fun dependency-graph-for component-map ->
         result.add-node d
         add-dependency d
 
-  result.direct-dependencies-of = k -> direct-deps[k]
   result
 
 fun compose component-map ->
@@ -58,7 +54,7 @@ fun compose component-map ->
     if (var c = component-map[k])
       c.apply
         this
-        dg.direct-dependencies-of (k).map d -> system[d]
+        dg.outgoing-edges[k].map d -> system[d]
     else
       undefined
   dg.overall-order ().for-each k ->
